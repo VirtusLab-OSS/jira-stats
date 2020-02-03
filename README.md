@@ -1,13 +1,13 @@
 # jira-stats
 [![Github Build Action](https://github.com/VirtusLab-OSS/jira-stats/workflows/Build%20%26%20Test/badge.svg)](https://github.com/VirtusLab-OSS/jira-stats/actions?query=workflow%3A%22Build+%26+Test%22)
 
-Simple tool to fetching Jira tickets and genereting CSV for reporting purposes.
+Simple tool to fetching Jira tickets and generating CSV for reporting purposes.
 
 #### Building codebase locally:
 * Make sure you have [Golang](https://golang.org/doc/install) installed
 * Make sure you have [Serverless Framework](https://serverless.com/framework/docs/getting-started/) tools installed  
-* Create dir `$GO_PATH/github.com/VirtusLab` and clone this repo there
-* Go into repo dir and type `make build`
+* Create dir `$GOPATH/src/github.com/VirtusLab` and clone this repo there
+* Go into repo dir type `make init` and then `make build`
 
 
 #### Running it locally
