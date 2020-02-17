@@ -2,11 +2,22 @@ package domain
 
 import (
 	"log"
+	"sort"
+	"strings"
 	"time"
 )
 
 const StatusField = "status"
+const FlagField = "flagged"
+
 const StateDev = "In Development"
+
+const StateClosed = "Closed"
+const StateOnLive = "On live"
+
+var StatesClosed = [...]string{
+	strings.ToLower(StateClosed), strings.ToLower(StateOnLive),
+}
 
 type Now func() time.Time
 
@@ -23,6 +34,7 @@ type DaysCalculator struct {
 	- if DEV started ticket before noon - whole day is going to be counted for that day
 	- if DEV started ticket after noon - day would be counted as half (0.5)
     - if DEV started and moved ticket further at the same day - number of ours would be rounded to nearest multiplication of 0.25 of day (2 hours)
+	- below 15 mins is rounded to 0
 	- weekends are not counted
 */
 func (this *DaysCalculator) CalculateDevDays(ticket Ticket, start time.Time, end time.Time) float64 {
@@ -43,6 +55,20 @@ func (this *DaysCalculator) CalculateDevDays(ticket Ticket, start time.Time, end
 	return float64(cumulativeTime) / 8.0
 }
 
+func (this *DaysCalculator) CalculateCloseDate(ticket Ticket) time.Time {
+	transitions := extractStateChanges(ticket.ChangelogEntries)
+
+	if len(transitions) > 0 {
+		finalTransition := transitions[len(transitions)-1]
+
+		if contains(StatesClosed[:], strings.ToLower(finalTransition.newState)) {
+			return finalTransition.timestamp
+		}
+	}
+
+	return EndOfTime
+}
+
 func (this *DaysCalculator) shouldSkipTicket(ticket Ticket) bool {
 	return ticket.Type == "Epic" // epics are being skipped from calculation
 }
@@ -59,7 +85,9 @@ func (this *DaysCalculator) calculateDevTime(interval TransitionInterval, start 
 
 	diff := interval.End.Sub(interval.Start)
 
-	if diff.Minutes() <= 2*60 {
+	if diff.Minutes() <= 15 {
+		return 0
+	} else if diff.Minutes() <= 2*60 {
 		return 2
 	} else if diff.Minutes() <= 4*60 {
 		return 4
@@ -150,4 +178,9 @@ func (this *DaysCalculator) now() time.Time {
 	} else {
 		return time.Now()
 	}
+}
+
+func contains(s []string, searchterm string) bool {
+	i := sort.SearchStrings(s, searchterm)
+	return i < len(s) && s[i] == searchterm
 }
